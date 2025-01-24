@@ -17,6 +17,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.utility.MountableFile.forClasspathResource
 
 @ActiveProfiles("integration-test")
 @ExtendWith(SpringExtension::class)
@@ -35,6 +36,11 @@ abstract class TestApplication {
         private val SQL_CONTAINER: PostgreSQLContainer<*> =
             PostgreSQLContainer("postgres:14.5")
                 .withDatabaseName("howto-db-it")
+                .withUsername("howto")
+                .withCopyFileToContainer(
+                    forClasspathResource("/db/baseline/howto_db_baseline.sql"),
+                    "/docker-entrypoint-initdb.d/howto_db_baseline.sql",
+                )
 
         @JvmStatic
         @DynamicPropertySource
