@@ -5,11 +5,13 @@ import com.example.howtokotlin.model.Account
 import com.example.howtokotlin.model.id.AccountId
 import com.example.howtokotlin.model.id.Username
 import com.example.howtokotlin.testutil.TestApplication
+import com.example.howtokotlin.testutil.TestPopulator.populate
+import com.github.anhem.testpopulator.config.OverridePopulate
+import com.github.anhem.testpopulator.config.OverrideTarget
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import java.time.Instant
 import java.util.*
 
 internal class AccountRepositoryIT : TestApplication() {
@@ -18,21 +20,18 @@ internal class AccountRepositoryIT : TestApplication() {
 
     @Test
     fun crd() {
-        val account =
-            Account(
-                accountId = AccountId.NEW_ACCOUNT_ID,
-                username = Username(UUID.randomUUID().toString().substring(0, 30)),
-                email = "test@example.com",
-                firstName = "newFirst",
-                lastName = "newLast",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val account = populate<Account>(mapOf(
+            AccountId::class.java to OverridePopulate { AccountId.NEW_ACCOUNT_ID },
+            Username::class.java to OverridePopulate { Username(UUID.randomUUID().toString().substring(0, 30)) },
+            OverrideTarget.of("email", String::class.java) to OverridePopulate { "test@example.com" },
+            OverrideTarget.of("lastLogin", java.time.Instant::class.java) to OverridePopulate { null }
+        ))
 
         val accountId: AccountId = accountRepository.createAccount(account)
 
         val foundAccount: Account? = findAccount(accountId)
         assertThat(foundAccount).isNotNull
+        assertThat(foundAccount!!.email).isEqualTo("test@example.com")
         assertAccount(foundAccount!!, account, accountId)
         assertAccount(accountRepository.getAccount(account.username), account, accountId)
         assertAccount(accountRepository.getAccount(accountId), account, accountId)
@@ -69,7 +68,7 @@ internal class AccountRepositoryIT : TestApplication() {
         ) {
             assertThat(readAccount)
                 .usingRecursiveComparison()
-                .ignoringFields("accountId", "created", "lastUpdated")
+                .ignoringFields("accountId", "created", "lastUpdated", "lastLogin")
                 .isEqualTo(account)
             assertThat(readAccount.accountId).isEqualTo(accountId)
             assertThat(readAccount.created).isBetween(account.created.minusSeconds(1), account.created.plusSeconds(1))

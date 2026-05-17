@@ -8,38 +8,31 @@ import com.example.howtokotlin.model.id.AccountId
 import com.example.howtokotlin.model.id.CategoryId
 import com.example.howtokotlin.model.id.PostId
 import com.example.howtokotlin.model.id.Username
+import com.example.howtokotlin.testutil.TestPopulator.populate
+import com.github.anhem.testpopulator.config.OverridePopulate
+import com.github.anhem.testpopulator.config.OverrideTarget
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.time.Instant
 
 internal class PostDTOMapperTest {
     @Test
     fun mappedToDTO() {
-        val account =
-            Account(
-                accountId = AccountId(1),
-                username = Username("username"),
-                firstName = "firstName",
-                lastName = "lastName",
-                email = "email",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-                lastLogin = Instant.now(),
-            )
-        val post =
-            Post(
-                postId = PostId(2),
-                categoryId = CategoryId(3),
-                accountId = account.accountId,
-                title = "title",
-                body = "body",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val accountId = AccountId(1)
+        val account = populate<Account>(mapOf(
+            AccountId::class.java to OverridePopulate { accountId },
+            Username::class.java to OverridePopulate { Username("username") },
+            OverrideTarget.of("email", String::class.java) to OverridePopulate { "test@example.com" }
+        ))
+        val post = populate<Post>(mapOf(
+            PostId::class.java to OverridePopulate { PostId(2) },
+            CategoryId::class.java to OverridePopulate { CategoryId(3) },
+            AccountId::class.java to OverridePopulate { accountId }
+        ))
 
         val postDTOs: List<PostDTO> = mapToPostDTOs(listOf(post), listOf(account))
 
         assertThat(postDTOs).hasSize(1)
         assertThat(postDTOs[0]).hasNoNullFieldsOrProperties()
+        assertThat(postDTOs[0].username).isEqualTo("username")
     }
 }

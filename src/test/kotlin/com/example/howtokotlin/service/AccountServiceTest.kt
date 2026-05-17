@@ -10,6 +10,9 @@ import com.example.howtokotlin.repository.AccountPasswordRepository
 import com.example.howtokotlin.repository.AccountRepository
 import com.example.howtokotlin.repository.AccountRoleRepository
 import com.example.howtokotlin.repository.RoleRepository
+import com.example.howtokotlin.testutil.TestPopulator.populate
+import com.github.anhem.testpopulator.config.OverridePopulate
+import com.github.anhem.testpopulator.config.OverrideTarget
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
@@ -45,16 +48,11 @@ internal class AccountServiceTest {
 
     @Test
     fun exceptionIsThrownWHenCreatingUserAccountWithAccountIdNotZero() {
-        val accountWithIdNotZero =
-            Account(
-                accountId = AccountId(1),
-                username = Username("username"),
-                email = "email",
-                firstName = "firstName",
-                lastName = "lastName",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val accountWithIdNotZero = populate<Account>(mapOf(
+            AccountId::class.java to OverridePopulate { AccountId(1) },
+            Username::class.java to OverridePopulate { Username("username") },
+            OverrideTarget.of("email", String::class.java) to OverridePopulate { "test@example.com" }
+        ))
         every { roleRepository.getRoleByName(RoleName.USER) } returns USER_ROLE
 
         assertThatThrownBy {
@@ -68,16 +66,11 @@ internal class AccountServiceTest {
 
     @Test
     fun exceptionIsThrownWhenCreatingUserAccountWithReservedUsername() {
-        val accountWithReservedUsername =
-            Account(
-                accountId = AccountId.NEW_ACCOUNT_ID,
-                username = Username.UNKNOWN,
-                email = "email",
-                firstName = "firstName",
-                lastName = "lastName",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val accountWithReservedUsername = populate<Account>(mapOf(
+            AccountId::class.java to OverridePopulate { AccountId.NEW_ACCOUNT_ID },
+            Username::class.java to OverridePopulate { Username.UNKNOWN },
+            OverrideTarget.of("email", String::class.java) to OverridePopulate { "test@example.com" }
+        ))
         every { roleRepository.getRoleByName(RoleName.USER) } returns USER_ROLE
 
         assertThatThrownBy {
@@ -130,25 +123,15 @@ internal class AccountServiceTest {
     }
 
     companion object {
-        val NEW_ACCOUNT: Account =
-            Account(
-                accountId = AccountId.NEW_ACCOUNT_ID,
-                username = Username("username"),
-                email = "email",
-                firstName = "firstName",
-                lastName = "lastName",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val NEW_ACCOUNT: Account = populate<Account>(mapOf(
+            AccountId::class.java to OverridePopulate { AccountId.NEW_ACCOUNT_ID },
+            Username::class.java to OverridePopulate { Username("username") },
+            OverrideTarget.of("email", String::class.java) to OverridePopulate { "test@example.com" }
+        ))
         private val PASSWORD: Password = Password("{bcrypt}encryptedPassword")
 
-        val USER_ROLE =
-            Role(
-                roleId = RoleId(1),
-                roleName = RoleName.USER,
-                description = "description",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val USER_ROLE = populate<Role>(mapOf(
+            RoleId::class.java to OverridePopulate { RoleId(1) }
+        ))
     }
 }

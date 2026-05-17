@@ -7,6 +7,7 @@ import com.example.howtokotlin.controller.model.ErrorCode.VALIDATION_ERROR
 import com.example.howtokotlin.model.id.JwtToken
 import com.example.howtokotlin.service.ForumService.Companion.MALICIOUS_URL_DETECTED
 import com.example.howtokotlin.testutil.TestApplication
+import com.example.howtokotlin.testutil.TestPopulator.populate
 import io.mockk.every
 import io.mockk.junit5.MockKExtension
 import io.mockk.mockk
@@ -109,7 +110,7 @@ internal class ForumControllerIT : TestApplication() {
         val response: ResponseEntity<ErrorDTO> =
             postWithToken(
                 GET_CATEGORIES_URL,
-                UpsertCategoryDTO(name = "name", description = "description"),
+                populate<UpsertCategoryDTO>(),
                 ErrorDTO::class.java,
                 userJwtToken,
             )
@@ -282,7 +283,7 @@ internal class ForumControllerIT : TestApplication() {
     }
 
     private fun updateCategory(categoryId: Int): CategoryDTO {
-        val upsertCategoryDTO = UpsertCategoryDTO(name = UUID.randomUUID().toString(), description = "updatedDescription")
+        val upsertCategoryDTO = populate<UpsertCategoryDTO>()
         val response: ResponseEntity<CategoryDTO> =
             putWithToken(
                 String.format(CATEGORY_URL, categoryId),
@@ -299,7 +300,7 @@ internal class ForumControllerIT : TestApplication() {
         val response: ResponseEntity<MessageDTO> =
             postWithToken(
                 GET_CATEGORIES_URL,
-                UpsertCategoryDTO(name = UUID.randomUUID().toString(), description = "createDescription"),
+                populate<UpsertCategoryDTO>(),
                 MessageDTO::class.java,
                 jwtToken,
             )
@@ -321,7 +322,7 @@ internal class ForumControllerIT : TestApplication() {
     }
 
     private fun createPost(categoryId: Int): Int {
-        val createPostDTO = CreatePostDTO(categoryId = categoryId, title = "createTitle", body = "createBody")
+        val createPostDTO = populate<CreatePostDTO>("categoryId", Int::class.java) { categoryId }
         val response: ResponseEntity<MessageDTO> =
             postWithToken(
                 CREATE_POST_URL,
@@ -338,7 +339,7 @@ internal class ForumControllerIT : TestApplication() {
     }
 
     private fun updatePost(postId: Int): PostDTO {
-        val updatePostDTO = UpdatePostDTO(title = "updateTitle", body = "updateBody")
+        val updatePostDTO = populate<UpdatePostDTO>()
         val response: ResponseEntity<PostDTO> =
             putWithToken(
                 String.format(POST_URL, postId),
@@ -406,7 +407,7 @@ internal class ForumControllerIT : TestApplication() {
     }
 
     private fun createReply(postId: Int): Int {
-        val createReplyDTO = CreateReplyDTO(postId = postId, body = "createBody")
+        val createReplyDTO = populate<CreateReplyDTO>("postId", Int::class.java) { postId }
         val response: ResponseEntity<MessageDTO> =
             postWithToken(
                 String.format(CREATE_REPLY_URL, postId),
@@ -422,7 +423,7 @@ internal class ForumControllerIT : TestApplication() {
     }
 
     private fun updateReply(replyId: Int): ReplyDTO {
-        val updateReplyDTO = UpdateReplyDTO(body = "updateBody")
+        val updateReplyDTO = populate<UpdateReplyDTO>()
         val response: ResponseEntity<ReplyDTO> =
             putWithToken(
                 String.format(REPLY_URL, replyId),

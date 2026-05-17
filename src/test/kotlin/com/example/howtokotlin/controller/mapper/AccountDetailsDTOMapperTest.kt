@@ -6,30 +6,27 @@ import com.example.howtokotlin.model.Account
 import com.example.howtokotlin.model.RoleName.ADMINISTRATOR
 import com.example.howtokotlin.model.id.AccountId
 import com.example.howtokotlin.model.id.Username
+import com.example.howtokotlin.testutil.TestPopulator.populate
+import com.github.anhem.testpopulator.config.OverridePopulate
+import com.github.anhem.testpopulator.config.OverrideTarget
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.time.Instant
 
 class AccountDetailsDTOMapperTest {
     @Test
     fun mappedToDTO() {
-        val account =
-            Account(
-                accountId = AccountId(1),
-                username = Username("username"),
-                firstName = "firstName",
-                lastName = "lastName",
-                email = "email",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-                lastLogin = Instant.now(),
-            )
+        val account = populate<Account>(mapOf(
+            AccountId::class.java to OverridePopulate { AccountId(1) },
+            Username::class.java to OverridePopulate { Username("username") },
+            OverrideTarget.of("email", String::class.java) to OverridePopulate { "test@example.com" }
+        ))
 
         val roleNames = listOf(ADMINISTRATOR)
         val accountDetailsDTO: AccountDetailsDTO = mapToAccountDetailsDTO(account, roleNames)
 
         assertThat(accountDetailsDTO).hasNoNullFieldsOrProperties()
         assertThat(accountDetailsDTO.account.id).isEqualTo(account.accountId.value)
+        assertThat(accountDetailsDTO.account.email).isEqualTo("test@example.com")
         assertThat(accountDetailsDTO.created).isEqualTo(account.created)
         assertThat(accountDetailsDTO.update).isEqualTo(account.lastUpdated)
         assertThat(accountDetailsDTO.roles).hasSize(roleNames.size)
