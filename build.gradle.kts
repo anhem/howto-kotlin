@@ -54,7 +54,7 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("org.assertj:assertj-core")
     testImplementation("io.mockk:mockk:1.13.16")
-    testImplementation("com.github.anhem:test-populator:1.0.0")
+    testImplementation("com.github.anhem:test-populator:1.0.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
