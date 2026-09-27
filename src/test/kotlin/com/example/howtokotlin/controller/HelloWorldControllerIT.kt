@@ -21,11 +21,16 @@ internal class HelloWorldControllerIT : TestApplication() {
 
     @Test
     fun unauthenticatedCanGetHelloWorld() {
-        val response: ResponseEntity<MessageDTO> = testRestTemplate.getForEntity(GET_URL, MessageDTO::class.java)
+        val result =
+            restTestClient.get()
+                .uri(GET_URL)
+                .exchange()
+                .expectBody(MessageDTO::class.java)
+                .returnResult()
 
-        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(response.body).isNotNull()
-        assertThat(response.body!!.message).isEqualTo(HELLO_WORLD)
+        assertThat(result.status).isEqualTo(HttpStatus.OK)
+        assertThat(result.responseBody).isNotNull()
+        assertThat(result.responseBody!!.message).isEqualTo(HELLO_WORLD)
     }
 
     @Test

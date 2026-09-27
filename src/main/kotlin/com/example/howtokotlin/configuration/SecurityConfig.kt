@@ -18,29 +18,22 @@ class SecurityConfig(
     private val jwtTokenFilter: JwtTokenFilter,
 ) {
     @Bean
-    fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager =
+    open fun authenticationManager(authenticationConfiguration: AuthenticationConfiguration): AuthenticationManager =
         authenticationConfiguration.authenticationManager
 
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain {
+    open fun filterChain(http: HttpSecurity): SecurityFilterChain {
         http
-            .csrf()
-            .disable()
-            .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            .and()
-            .authorizeHttpRequests()
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**")
-            .permitAll()
-            .requestMatchers("/actuator/**")
-            .permitAll()
-            .requestMatchers("/api/auth/**")
-            .permitAll()
-            .requestMatchers("/api/hello-world")
-            .permitAll()
-            .anyRequest()
-            .authenticated()
-            .and()
+            .csrf { it.disable() }
+            .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .authorizeHttpRequests { authorize ->
+                authorize
+                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                    .requestMatchers("/actuator/**").permitAll()
+                    .requestMatchers("/api/auth/**").permitAll()
+                    .requestMatchers("/api/hello-world").permitAll()
+                    .anyRequest().authenticated()
+            }
             .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
         return http.build()
     }

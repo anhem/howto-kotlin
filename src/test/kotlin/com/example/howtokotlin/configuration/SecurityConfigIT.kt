@@ -2,12 +2,11 @@ package com.example.howtokotlin.configuration
 
 import com.example.howtokotlin.controller.model.MessageDTO
 import com.example.howtokotlin.testutil.TestApplication
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.method.HandlerMethod
@@ -77,7 +76,8 @@ internal class SecurityConfigIT : TestApplication() {
     ) {
         val url = pathPattern.patternString
         if (!GET_URL_WHITELIST.contains(url)) {
-            if (testRestTemplate.getForEntity(cleanUrl(url), Any::class.java).statusCode !== HttpStatus.FORBIDDEN) {
+            val result = restTestClient.get().uri(cleanUrl(url)).exchange().returnResult(Any::class.java)
+            if (result.status != HttpStatus.FORBIDDEN) {
                 failedEndpoints.add(String.format(VALIDATION_ERROR_MESSAGE, "GET", url, HttpStatus.FORBIDDEN, "GET_URL_WHITELIST"))
             }
         } else {
@@ -91,9 +91,8 @@ internal class SecurityConfigIT : TestApplication() {
     ) {
         val url = pathPattern.patternString
         if (!PATCH_URL_WHITELIST.contains(url)) {
-            if (testRestTemplate.exchange(cleanUrl(url), HttpMethod.PATCH, null, Any::class.java).statusCode !==
-                HttpStatus.FORBIDDEN
-            ) {
+            val result = restTestClient.patch().uri(cleanUrl(url)).exchange().returnResult(Any::class.java)
+            if (result.status != HttpStatus.FORBIDDEN) {
                 failedEndpoints.add(String.format(VALIDATION_ERROR_MESSAGE, "PATCH", url, HttpStatus.FORBIDDEN, "PATCH_URL_WHITELIST"))
             }
         } else {
@@ -107,7 +106,8 @@ internal class SecurityConfigIT : TestApplication() {
     ) {
         val url = pathPattern.patternString
         if (!POST_URL_WHITELIST.contains(url)) {
-            if (testRestTemplate.postForEntity(cleanUrl(url), MessageDTO.OK, Any::class.java).statusCode !== HttpStatus.FORBIDDEN) {
+            val result = restTestClient.post().uri(cleanUrl(url)).body(MessageDTO.OK).exchange().returnResult(Any::class.java)
+            if (result.status != HttpStatus.FORBIDDEN) {
                 failedEndpoints.add(String.format(VALIDATION_ERROR_MESSAGE, "POST", url, HttpStatus.FORBIDDEN, "POST_URL_WHITELIST"))
             }
         } else {
@@ -121,7 +121,8 @@ internal class SecurityConfigIT : TestApplication() {
     ) {
         val url = pathPattern.patternString
         if (!PUT_URL_WHITELIST.contains(url)) {
-            if (testRestTemplate.exchange(cleanUrl(url), HttpMethod.PUT, null, Any::class.java).statusCode !== HttpStatus.FORBIDDEN) {
+            val result = restTestClient.put().uri(cleanUrl(url)).exchange().returnResult(Any::class.java)
+            if (result.status != HttpStatus.FORBIDDEN) {
                 failedEndpoints.add(String.format(VALIDATION_ERROR_MESSAGE, "PUT", url, HttpStatus.FORBIDDEN, "PUT_URL_WHITELIST"))
             }
         } else {
@@ -135,9 +136,8 @@ internal class SecurityConfigIT : TestApplication() {
     ) {
         val url = pathPattern.patternString
         if (!DELETE_URL_WHITELIST.contains(url)) {
-            if (testRestTemplate.exchange(cleanUrl(url), HttpMethod.DELETE, null, Any::class.java).statusCode !==
-                HttpStatus.FORBIDDEN
-            ) {
+            val result = restTestClient.delete().uri(cleanUrl(url)).exchange().returnResult(Any::class.java)
+            if (result.status != HttpStatus.FORBIDDEN) {
                 failedEndpoints.add(String.format(VALIDATION_ERROR_MESSAGE, "DELETE", url, HttpStatus.FORBIDDEN, "DELETE_URL_WHITELIST"))
             }
         } else {

@@ -32,7 +32,7 @@ internal class AccountRepositoryIT : TestApplication() {
         val foundAccount: Account? = findAccount(accountId)
         assertThat(foundAccount).isNotNull
         assertThat(foundAccount!!.email).isEqualTo("test@example.com")
-        assertAccount(foundAccount!!, account, accountId)
+        assertAccount(foundAccount, account, accountId)
         assertAccount(accountRepository.getAccount(account.username), account, accountId)
         assertAccount(accountRepository.getAccount(accountId), account, accountId)
         assertThat(accountRepository.accountExists(account.username, "")).isTrue()

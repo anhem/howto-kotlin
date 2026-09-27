@@ -1,6 +1,7 @@
 package com.example.howtokotlin.client.urlhaus
 
 import com.example.howtokotlin.client.urlhaus.UrlHausClient.Companion.TOO_MANY_URLS
+import com.example.howtokotlin.configuration.HowtoConfig
 import com.example.howtokotlin.exception.ValidationException
 import com.example.howtokotlin.testutil.TestApplication
 import org.assertj.core.api.Assertions
@@ -17,7 +18,7 @@ import org.springframework.test.web.client.ExpectedCount
 import org.springframework.test.web.client.MockRestServiceServer
 import org.springframework.test.web.client.match.MockRestRequestMatchers
 import org.springframework.test.web.client.response.MockRestResponseCreators
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.RestClient
 import java.net.URI
 
 internal class UrlHausClientIT : TestApplication() {
@@ -28,16 +29,19 @@ internal class UrlHausClientIT : TestApplication() {
     private lateinit var okUrlResponse: Resource
 
     @Autowired
-    private lateinit var urlHausRestTemplate: RestTemplate
+    private lateinit var urlHausRestClientBuilder: RestClient.Builder
 
     @Autowired
+    private lateinit var howtoConfig: HowtoConfig
+
     private lateinit var urlHausClient: UrlHausClient
     private lateinit var mockRestServiceServer: MockRestServiceServer
     private lateinit var uri: URI
 
     @BeforeEach
     fun setUp() {
-        mockRestServiceServer = MockRestServiceServer.createServer(urlHausRestTemplate)
+        mockRestServiceServer = MockRestServiceServer.bindTo(urlHausRestClientBuilder).build()
+        urlHausClient = UrlHausClient(howtoConfig, urlHausRestClientBuilder.build())
         uri = URI("http://localhost:8080/v1/url/")
     }
 

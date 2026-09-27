@@ -21,7 +21,7 @@ internal class PasswordTest {
 
     @Test
     fun passwordCreatedWhenValueIsEncoded() {
-        val encodePassword = PASSWORD_ENCODER.encode(RAW_PASSWORD)
+        val encodePassword = PASSWORD_ENCODER.encode(RAW_PASSWORD)!!
 
         val password = Password(encodePassword)
 

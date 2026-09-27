@@ -82,9 +82,9 @@ class AuthService(
         getUserDetailsFromSecurityContext()
             .authorities
             .stream()
-            .map { grantedAuthority -> RoleName.fromRole(grantedAuthority.authority) }
+            .map { grantedAuthority -> RoleName.fromRole(grantedAuthority.authority!!) }
             .toList()
 
     private fun getUserDetailsFromSecurityContext(): UserDetails =
-        SecurityContextHolder.getContext().authentication.principal as UserDetails
+        SecurityContextHolder.getContext().authentication!!.principal as UserDetails
 }

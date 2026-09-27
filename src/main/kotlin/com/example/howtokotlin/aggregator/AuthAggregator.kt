@@ -12,7 +12,7 @@ class AuthAggregator(
     private val authenticationManager: AuthenticationManager,
     private var authService: AuthService,
 ) {
-    fun authenticateAndGetJwtToken(usernamePasswordAuthenticationToken: UsernamePasswordAuthenticationToken?): JwtToken {
+    fun authenticateAndGetJwtToken(usernamePasswordAuthenticationToken: UsernamePasswordAuthenticationToken): JwtToken {
         val authentication = authenticationManager.authenticate(usernamePasswordAuthenticationToken)
         return authService.generateToken(authentication.principal as UserDetails)
     }

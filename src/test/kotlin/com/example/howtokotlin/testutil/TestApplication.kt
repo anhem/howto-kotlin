@@ -9,19 +9,23 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.web.client.TestRestTemplate
-import org.springframework.http.*
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import org.testcontainers.containers.PostgreSQLContainer
+import org.springframework.test.web.servlet.client.RestTestClient
+import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.MountableFile.forClasspathResource
 
 @ActiveProfiles("integration-test")
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureRestTestClient
 abstract class TestApplication {
     companion object {
         private const val ADMIN_USERNAME = "admin"
@@ -33,7 +37,7 @@ abstract class TestApplication {
 
         private const val AUTHENTICATE_URL = "/api/auth/authenticate"
 
-        private val SQL_CONTAINER: PostgreSQLContainer<*> =
+        private val SQL_CONTAINER: PostgreSQLContainer =
             PostgreSQLContainer("postgres:14.5")
                 .withDatabaseName("howto-db-it")
                 .withUsername("howto")
@@ -81,40 +85,70 @@ abstract class TestApplication {
     }
 
     @Autowired
-    protected lateinit var testRestTemplate: TestRestTemplate
+    protected lateinit var restTestClient: RestTestClient
 
-    protected fun <T> getWithToken(
+    protected fun <T : Any> getWithToken(
         url: String,
-        responseType: Class<T>?,
+        responseType: Class<T>,
         jwtToken: JwtToken,
-    ): ResponseEntity<T> = testRestTemplate.exchange(url, HttpMethod.GET, HttpEntity<Any>(withJwtToken(jwtToken)), responseType)
+    ): ResponseEntity<T> {
+        val result =
+            restTestClient.get()
+                .uri(url)
+                .headers { headers -> headers.addAll(withJwtToken(jwtToken)) }
+                .exchange()
+                .expectBody(responseType)
+                .returnResult()
+        return ResponseEntity(result.responseBody, result.responseHeaders, result.status)
+    }
 
-    protected fun <T, B> postWithToken(
+    protected fun <T : Any, B : Any> postWithToken(
         url: String,
         body: B,
-        responseType: Class<T>?,
+        responseType: Class<T>,
         jwtToken: JwtToken,
-    ): ResponseEntity<T> = testRestTemplate.exchange(url, HttpMethod.POST, withJwtToken(body, jwtToken), responseType)
+    ): ResponseEntity<T> {
+        val result =
+            restTestClient.post()
+                .uri(url)
+                .headers { headers -> headers.addAll(withJwtToken(jwtToken)) }
+                .body(body)
+                .exchange()
+                .expectBody(responseType)
+                .returnResult()
+        return ResponseEntity(result.responseBody, result.responseHeaders, result.status)
+    }
 
-    protected fun <T, B> putWithToken(
+    protected fun <T : Any, B : Any> putWithToken(
         url: String,
         body: B,
-        responseType: Class<T>?,
+        responseType: Class<T>,
         jwtToken: JwtToken,
-    ): ResponseEntity<T> = testRestTemplate.exchange(url, HttpMethod.PUT, withJwtToken(body, jwtToken), responseType)
+    ): ResponseEntity<T> {
+        val result =
+            restTestClient.put()
+                .uri(url)
+                .headers { headers -> headers.addAll(withJwtToken(jwtToken)) }
+                .body(body)
+                .exchange()
+                .expectBody(responseType)
+                .returnResult()
+        return ResponseEntity(result.responseBody, result.responseHeaders, result.status)
+    }
 
-    protected fun <T> deleteWithToken(
+    protected fun <T : Any> deleteWithToken(
         url: String,
-        responseType: Class<T>?,
+        responseType: Class<T>,
         jwtToken: JwtToken,
-    ): ResponseEntity<T> = testRestTemplate.exchange(url, HttpMethod.DELETE, HttpEntity<Any>(withJwtToken(jwtToken)), responseType)
-
-    private fun <T> withJwtToken(
-        body: T,
-        jwtToken: JwtToken,
-    ): HttpEntity<T> {
-        val httpHeaders = withJwtToken(jwtToken)
-        return HttpEntity(body, httpHeaders)
+    ): ResponseEntity<T> {
+        val result =
+            restTestClient.delete()
+                .uri(url)
+                .headers { headers -> headers.addAll(withJwtToken(jwtToken)) }
+                .exchange()
+                .expectBody(responseType)
+                .returnResult()
+        return ResponseEntity(result.responseBody, result.responseHeaders, result.status)
     }
 
     private fun authenticate(
@@ -126,14 +160,15 @@ abstract class TestApplication {
                 username = username,
                 password = password,
             )
-        val response: ResponseEntity<MessageDTO> =
-            testRestTemplate.postForEntity(
-                AUTHENTICATE_URL,
-                authenticateDTO,
-                MessageDTO::class.java,
-            )
-        assertThat(response.statusCode).isEqualTo(HttpStatus.OK)
-        assertThat(response.body).isNotNull()
-        return JwtToken(response.body!!.message)
+        val result =
+            restTestClient.post()
+                .uri(AUTHENTICATE_URL)
+                .body(authenticateDTO)
+                .exchange()
+                .expectBody(MessageDTO::class.java)
+                .returnResult()
+        assertThat(result.status).isEqualTo(HttpStatus.OK)
+        assertThat(result.responseBody).isNotNull()
+        return JwtToken(result.responseBody!!.message)
     }
 }

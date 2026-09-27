@@ -2,7 +2,6 @@ package com.example.howtokotlin.controller
 
 import com.example.howtokotlin.aggregator.AccountAggregator
 import com.example.howtokotlin.configuration.JwtTokenFilter.Companion.BEARER_AUTHENTICATION
-import com.example.howtokotlin.controller.mapper.AccountDTOMapper.mapToAccountDTOs
 import com.example.howtokotlin.controller.mapper.AccountsDTOMapper.mapToAccountsDTO
 import com.example.howtokotlin.controller.mapper.CreateAccountDTOMapper.mapToAccount
 import com.example.howtokotlin.controller.model.AccountDetailsDTO
@@ -43,7 +42,7 @@ class AccountController(
         fromId(
             accountService.createUserAccount(
                 mapToAccount(createAccountDTO),
-                Password(passwordEncoder.encode(createAccountDTO.password)),
+                Password(passwordEncoder.encode(createAccountDTO.password)!!),
             ),
         )
 
@@ -54,7 +53,7 @@ class AccountController(
         fromId(
             accountService.createAdministratorAccount(
                 mapToAccount(createAccountDTO),
-                Password(passwordEncoder.encode(createAccountDTO.password)),
+                Password(passwordEncoder.encode(createAccountDTO.password)!!),
             ),
         )
 
