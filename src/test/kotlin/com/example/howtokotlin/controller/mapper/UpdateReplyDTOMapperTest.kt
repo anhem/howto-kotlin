@@ -6,30 +6,30 @@ import com.example.howtokotlin.model.Reply
 import com.example.howtokotlin.model.id.AccountId
 import com.example.howtokotlin.model.id.PostId
 import com.example.howtokotlin.model.id.ReplyId
+import com.example.howtokotlin.testutil.TestPopulator.populate
+import com.github.anhem.testpopulator.config.OverridePopulate
+import com.github.anhem.testpopulator.config.OverrideTarget
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.time.Instant
 
 internal class UpdateReplyDTOMapperTest {
     @Test
     fun mappedToModel() {
-        val updateReplyDTO =
-            UpdateReplyDTO(
-                body = "body2",
-            )
-        val reply =
-            Reply(
-                replyId = ReplyId(1),
-                postId = PostId(2),
-                accountId = AccountId(3),
-                body = "body",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val updateReplyDTO = populate<UpdateReplyDTO>("body", String::class.java) { "body2" }
+        val reply = populate<Reply>(mapOf(
+            ReplyId::class.java to OverridePopulate { ReplyId(1) },
+            PostId::class.java to OverridePopulate { PostId(2) },
+            AccountId::class.java to OverridePopulate { AccountId(3) },
+            OverrideTarget.of("lastUpdated", java.time.Instant::class.java) to OverridePopulate { java.time.Instant.now().minusSeconds(10) }
+        ))
 
         val updatedReply: Reply = mapToReply(updateReplyDTO, reply)
 
         assertThat(updatedReply).hasNoNullFieldsOrProperties()
-        assertThat(updatedReply).isNotEqualTo(reply)
+        assertThat(updatedReply.body).isEqualTo(updateReplyDTO.body)
+        assertThat(updatedReply.lastUpdated).isAfter(reply.lastUpdated)
+        assertThat(updatedReply).usingRecursiveComparison()
+            .ignoringFields("body", "lastUpdated")
+            .isEqualTo(reply)
     }
 }

@@ -8,33 +8,23 @@ import com.example.howtokotlin.model.id.AccountId
 import com.example.howtokotlin.model.id.PostId
 import com.example.howtokotlin.model.id.ReplyId
 import com.example.howtokotlin.model.id.Username
+import com.example.howtokotlin.testutil.TestPopulator.populate
+import com.github.anhem.testpopulator.config.OverridePopulate
 import org.assertj.core.api.AssertionsForInterfaceTypes.assertThat
 import org.junit.jupiter.api.Test
-import java.time.Instant
 
 internal class ReplyDTOMapperTest {
     @Test
     fun mappedToDTO() {
-        val account =
-            Account(
-                accountId = AccountId(1),
-                username = Username("username"),
-                firstName = "firstName",
-                lastName = "lastName",
-                email = "email",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-                lastLogin = Instant.now(),
-            )
-        val reply =
-            Reply(
-                replyId = ReplyId(2),
-                postId = PostId(3),
-                accountId = account.accountId,
-                body = "body",
-                created = Instant.now(),
-                lastUpdated = Instant.now(),
-            )
+        val account = populate<Account>(mapOf(
+            AccountId::class.java to OverridePopulate { AccountId(1) },
+            Username::class.java to OverridePopulate { Username("username") }
+        ))
+        val reply = populate<Reply>(mapOf(
+            ReplyId::class.java to OverridePopulate { ReplyId(2) },
+            PostId::class.java to OverridePopulate { PostId(3) },
+            AccountId::class.java to OverridePopulate { account.accountId }
+        ))
 
         val replyDTOs: List<ReplyDTO> = mapToReplyDTOs(listOf(reply), listOf(account))
 
