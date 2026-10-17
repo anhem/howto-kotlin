@@ -3,7 +3,9 @@ package com.example.howtokotlin.service
 import com.example.howtokotlin.model.Account
 import com.example.howtokotlin.model.AccountPassword
 import com.example.howtokotlin.model.Role
+import com.example.howtokotlin.model.RoleName
 import com.example.howtokotlin.model.RoleName.ADMINISTRATOR
+import com.example.howtokotlin.model.RoleName.MODERATOR
 import com.example.howtokotlin.model.RoleName.USER
 import com.example.howtokotlin.model.id.AccountId
 import com.example.howtokotlin.model.id.AccountPasswordId.Companion.NEW_ACCOUNT_PASSWORD_ID
@@ -49,12 +51,34 @@ class AccountService(
     }
 
     @Transactional
+    fun createModeratorAccount(
+        account: Account,
+        password: Password,
+    ): AccountId {
+        val moderatorRole: Role = roleRepository.getRoleByName(MODERATOR)
+        return createAccount(account, password, moderatorRole)
+    }
+
+    @Transactional
     fun createAdministratorAccount(
         account: Account,
         password: Password,
     ): AccountId {
         val administratorRole: Role = roleRepository.getRoleByName(ADMINISTRATOR)
         return createAccount(account, password, administratorRole)
+    }
+
+    @Transactional
+    fun updateAccountRole(
+        accountId: AccountId,
+        roleName: RoleName,
+    ) {
+        require(!accountId.isNew()) { "invalid accountId" }
+        getAccount(accountId)
+        val role: Role = roleRepository.getRoleByName(roleName)
+        accountRoleRepository.removeRolesFromAccount(accountId)
+        accountRoleRepository.addRoleToAccount(accountId, role.roleId, Instant.now())
+        log.info("Role for account {} updated to {}", accountId, roleName)
     }
 
     @Transactional

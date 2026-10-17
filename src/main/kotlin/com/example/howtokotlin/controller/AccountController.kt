@@ -8,6 +8,7 @@ import com.example.howtokotlin.controller.model.AccountDetailsDTO
 import com.example.howtokotlin.controller.model.CreateAccountDTO
 import com.example.howtokotlin.controller.model.MessageDTO
 import com.example.howtokotlin.controller.model.MessageDTO.Companion.fromId
+import com.example.howtokotlin.controller.model.UpdateAccountRoleDTO
 import com.example.howtokotlin.model.RoleName.Constants.ADMINISTRATOR
 import com.example.howtokotlin.model.id.AccountId
 import com.example.howtokotlin.model.id.Password
@@ -46,6 +47,17 @@ class AccountController(
             ),
         )
 
+    @PostMapping(value = ["users/moderator"])
+    fun createModeratorAccount(
+        @RequestBody createAccountDTO: @Valid CreateAccountDTO,
+    ): MessageDTO =
+        fromId(
+            accountService.createModeratorAccount(
+                mapToAccount(createAccountDTO),
+                Password(passwordEncoder.encode(createAccountDTO.password)!!),
+            ),
+        )
+
     @PostMapping(value = ["users/administrator"])
     fun createAdministratorAccount(
         @RequestBody createAccountDTO: @Valid CreateAccountDTO,
@@ -56,6 +68,13 @@ class AccountController(
                 Password(passwordEncoder.encode(createAccountDTO.password)!!),
             ),
         )
+
+    @PutMapping(value = ["{accountId}/role"])
+    fun updateAccountRole(
+        @PathVariable accountId: Int,
+        @RequestBody updateAccountRoleDTO: @Valid UpdateAccountRoleDTO,
+    ): AccountDetailsDTO =
+        accountAggregator.updateAccountRole(AccountId(accountId), updateAccountRoleDTO)
 
     @DeleteMapping(value = ["{accountId}"])
     fun removeAccount(

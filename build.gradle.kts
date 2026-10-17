@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
 plugins {
     kotlin("jvm") version "2.3.20"
     kotlin("plugin.spring") version "2.3.20"
@@ -59,8 +61,42 @@ dependencies {
     testImplementation("org.assertj:assertj-core")
     testImplementation("io.mockk:mockk:1.13.16")
     testImplementation("com.github.anhem:test-populator:1.1.0")
+    testImplementation("com.microsoft.playwright:playwright:1.49.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation(kotlin("stdlib"))
+}
+
+val npmInstall by tasks.registering(Exec::class) {
+    workingDir = file("frontend")
+    commandLine("npm", "install")
+    inputs.file("frontend/package.json")
+    inputs.file("frontend/package-lock.json")
+    outputs.dir("frontend/node_modules")
+}
+
+val npmBuild by tasks.registering(Exec::class) {
+    dependsOn(npmInstall)
+    workingDir = file("frontend")
+    commandLine("npm", "run", "build")
+    inputs.dir("frontend/src")
+    inputs.file("frontend/index.html")
+    inputs.file("frontend/vite.config.ts")
+    inputs.file("frontend/package.json")
+    inputs.file("frontend/tsconfig.json")
+    outputs.dir("frontend/dist")
+}
+
+val npmTest by tasks.registering(Exec::class) {
+    dependsOn(npmInstall)
+    workingDir = file("frontend")
+    commandLine("npm", "test")
+}
+
+tasks.named<ProcessResources>("processResources") {
+    dependsOn(npmBuild)
+    from("frontend/dist") {
+        into("static")
+    }
 }
 
 tasks.withType<Test> {
@@ -73,6 +109,22 @@ tasks.withType<Test> {
         showStandardStreams = true
         events("passed", "skipped", "failed")
     }
+}
+
+tasks.named<Test>("test") {
+    dependsOn(npmTest)
+}
+
+tasks.clean {
+    delete("frontend/dist")
+}
+
+tasks.register<BootRun>("bootRunLocal") {
+    group = "application"
+    description = "Runs the application with the 'local' profile"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set(tasks.named<BootRun>("bootRun").flatMap { it.mainClass })
+    systemProperty("spring.profiles.active", "local")
 }
 
 kotlin {

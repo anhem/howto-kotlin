@@ -1,7 +1,9 @@
 package com.example.howtokotlin.controller
 
 import com.example.howtokotlin.controller.model.*
+import com.example.howtokotlin.model.RoleName
 import com.example.howtokotlin.testutil.TestApplication
+import com.example.howtokotlin.testutil.TestPopulator.populate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpStatus
@@ -69,6 +71,66 @@ internal class AccountControllerIT : TestApplication() {
     }
 
     @Test
+    fun createModeratorAccount() {
+        val createAccountDTO = populate<CreateAccountDTO>("email", String::class.java) { "moderator_test@example.com" }
+
+        val createResponse: ResponseEntity<MessageDTO> =
+            postWithToken(
+                CREATE_MODERATOR_ACCOUNT_URL,
+                createAccountDTO,
+                MessageDTO::class.java,
+                adminJwtToken,
+            )
+
+        assertThat(createResponse.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(createResponse.body).isNotNull()
+
+        val accountId: Int = createResponse.body!!.message.toInt()
+
+        val accountDetailsResponse: ResponseEntity<AccountDetailsDTO> =
+            getWithToken(
+                String.format(GET_ACCOUNT_DETAILS_URL, accountId),
+                AccountDetailsDTO::class.java,
+                adminJwtToken,
+            )
+        assertThat(accountDetailsResponse.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(accountDetailsResponse.body).isNotNull()
+        assertThat(accountDetailsResponse.body!!.roles).contains("ROLE_MODERATOR")
+
+        deleteWithToken(String.format(DELETE_ACCOUNT_URL, accountId), MessageDTO::class.java, adminJwtToken)
+    }
+
+    @Test
+    fun updateAccountRole() {
+        val createAccountDTO = populate<CreateAccountDTO>("email", String::class.java) { "role_change@example.com" }
+
+        val createResponse: ResponseEntity<MessageDTO> =
+            postWithToken(
+                CREATE_USER_ACCOUNT_URL,
+                createAccountDTO,
+                MessageDTO::class.java,
+                adminJwtToken,
+            )
+        assertThat(createResponse.statusCode).isEqualTo(HttpStatus.OK)
+        val accountId: Int = createResponse.body!!.message.toInt()
+
+        val updateRoleDTO = UpdateAccountRoleDTO(role = RoleName.MODERATOR)
+
+        val updateResponse: ResponseEntity<AccountDetailsDTO> =
+            putWithToken(
+                String.format(UPDATE_ACCOUNT_ROLE_URL, accountId),
+                updateRoleDTO,
+                AccountDetailsDTO::class.java,
+                adminJwtToken,
+            )
+        assertThat(updateResponse.statusCode).isEqualTo(HttpStatus.OK)
+        assertThat(updateResponse.body).isNotNull()
+        assertThat(updateResponse.body!!.roles).containsExactly("ROLE_MODERATOR")
+
+        deleteWithToken(String.format(DELETE_ACCOUNT_URL, accountId), MessageDTO::class.java, adminJwtToken)
+    }
+
+    @Test
     fun userIsUnauthorized() {
         val createAccountDTO =
             CreateAccountDTO(
@@ -92,8 +154,10 @@ internal class AccountControllerIT : TestApplication() {
 
     companion object {
         private const val CREATE_USER_ACCOUNT_URL = "/api/accounts/users/user"
+        private const val CREATE_MODERATOR_ACCOUNT_URL = "/api/accounts/users/moderator"
         private const val GET_ACCOUNT_DETAILS_URL = "/api/accounts/details/%d"
         private const val GET_ACCOUNTS_URL = "/api/accounts"
+        private const val UPDATE_ACCOUNT_ROLE_URL = "/api/accounts/%d/role"
         const val DELETE_ACCOUNT_URL: String = "/api/accounts/%d"
 
         private fun assertAccount(
