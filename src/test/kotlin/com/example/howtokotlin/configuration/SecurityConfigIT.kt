@@ -20,7 +20,7 @@ internal class SecurityConfigIT : TestApplication() {
     companion object {
         private val GET_URL_WHITELIST = listOf("/swagger-ui.html", "/v3/api-docs", "/v3/api-docs/swagger-config", "/api/hello-world")
         private val PATCH_URL_WHITELIST = listOf<String>()
-        private val POST_URL_WHITELIST = listOf("/api/auth/authenticate")
+        private val POST_URL_WHITELIST = listOf("/api/auth/authenticate", "/api/auth/register")
         private val PUT_URL_WHITELIST = listOf<String>()
         private val DELETE_URL_WHITELIST = listOf<String>()
         const val VALIDATION_ERROR_MESSAGE: String = "%s on %s does not return %s. Either this url should be protected or it should be added to %s"

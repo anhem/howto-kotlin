@@ -2,6 +2,7 @@ package com.example.howtokotlin.aggregator
 
 import com.example.howtokotlin.controller.mapper.AccountDetailsDTOMapper.mapToAccountDetailsDTO
 import com.example.howtokotlin.controller.model.AccountDetailsDTO
+import com.example.howtokotlin.controller.model.UpdateAccountRoleDTO
 import com.example.howtokotlin.model.Account
 import com.example.howtokotlin.model.RoleName
 import com.example.howtokotlin.model.id.AccountId
@@ -18,5 +19,13 @@ class AccountAggregator(
         val account: Account = accountService.getAccount(accountId)
         val roleNames: List<RoleName> = accountRoleRepository.getRoleNames(accountId)
         return mapToAccountDetailsDTO(account, roleNames)
+    }
+
+    fun updateAccountRole(
+        accountId: AccountId,
+        updateAccountRoleDTO: UpdateAccountRoleDTO,
+    ): AccountDetailsDTO {
+        accountService.updateAccountRole(accountId, updateAccountRoleDTO.role)
+        return getAccountDetails(accountId)
     }
 }

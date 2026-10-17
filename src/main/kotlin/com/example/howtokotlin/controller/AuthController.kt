@@ -2,6 +2,7 @@ package com.example.howtokotlin.controller
 
 import com.example.howtokotlin.aggregator.AuthAggregator
 import com.example.howtokotlin.controller.model.AuthenticateDTO
+import com.example.howtokotlin.controller.model.CreateAccountDTO
 import com.example.howtokotlin.controller.model.MessageDTO
 import com.example.howtokotlin.model.id.JwtToken
 import jakarta.validation.Valid
@@ -27,6 +28,14 @@ class AuthController(
                     authenticateDTO.password,
                 ),
             )
+        return MessageDTO(jwtToken.value)
+    }
+
+    @PostMapping(value = ["register"])
+    fun register(
+        @RequestBody createAccountDTO: @Valid CreateAccountDTO,
+    ): MessageDTO {
+        val jwtToken: JwtToken = authAggregator.registerAndGetJwtToken(createAccountDTO)
         return MessageDTO(jwtToken.value)
     }
 }

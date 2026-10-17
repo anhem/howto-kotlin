@@ -122,6 +122,49 @@ internal class AccountServiceTest {
         assertThat(accountPassword.created).isCloseTo(Instant.now(), Assertions.within(1, ChronoUnit.SECONDS))
     }
 
+    @Test
+    fun moderatorAccountIsCreatedWhenCallingCreateModeratorAccount() {
+        val expectedAccountId = AccountId(101)
+        val role = populate<Role>()
+        every { roleRepository.getRoleByName(RoleName.MODERATOR) } returns role
+        every { accountRepository.accountExists(NEW_ACCOUNT.username, NEW_ACCOUNT.email) } returns false
+        every { accountRepository.createAccount(NEW_ACCOUNT) } returns expectedAccountId
+        every { accountRoleRepository.addRoleToAccount(any(), role.roleId, any<Instant>()) } returns true
+        every { accountPasswordRepository.createPassword(capture(accountPasswordSlot)) } returns AccountPasswordId(1)
+
+        val accountId: AccountId = accountService.createModeratorAccount(NEW_ACCOUNT, PASSWORD)
+
+        assertThat(accountId).isEqualTo(expectedAccountId)
+        verify(exactly = 1) {
+            accountRoleRepository.addRoleToAccount(
+                expectedAccountId,
+                role.roleId,
+                any<Instant>(),
+            )
+        }
+        val accountPassword: AccountPassword = accountPasswordSlot.captured
+        assertThat(accountPassword.accountPasswordId).isEqualTo(NEW_ACCOUNT_PASSWORD_ID)
+        assertThat(accountPassword.accountId).isEqualTo(accountId)
+        assertThat(accountPassword.password).isEqualTo(PASSWORD)
+        assertThat(accountPassword.created).isCloseTo(Instant.now(), Assertions.within(1, ChronoUnit.SECONDS))
+    }
+
+    @Test
+    fun accountRoleIsUpdatedWhenCallingUpdateAccountRole() {
+        val accountId = AccountId(1)
+        val account = NEW_ACCOUNT.copy(accountId = accountId)
+        val role = populate<Role>()
+        every { accountRepository.getAccount(accountId) } returns account
+        every { roleRepository.getRoleByName(RoleName.MODERATOR) } returns role
+        every { accountRoleRepository.removeRolesFromAccount(accountId) } returns true
+        every { accountRoleRepository.addRoleToAccount(eq(accountId), eq(role.roleId), any<Instant>()) } returns true
+
+        accountService.updateAccountRole(accountId, RoleName.MODERATOR)
+
+        verify(exactly = 1) { accountRoleRepository.removeRolesFromAccount(accountId) }
+        verify(exactly = 1) { accountRoleRepository.addRoleToAccount(eq(accountId), eq(role.roleId), any<Instant>()) }
+    }
+
     companion object {
         val NEW_ACCOUNT: Account = populate<Account>(mapOf(
             AccountId::class.java to OverridePopulate { AccountId.NEW_ACCOUNT_ID },
